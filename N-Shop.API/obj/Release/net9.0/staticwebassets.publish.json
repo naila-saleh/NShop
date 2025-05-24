@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "VqOKFuPsJFRw8uCrljCBmpbhgd13uQ+wNuL58BQNN4M=",
+  "Source": "N-Shop.API",
+  "BasePath": "_content/N-Shop.API",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
