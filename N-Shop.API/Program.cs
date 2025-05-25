@@ -53,6 +53,7 @@ public class Program
         builder.Services.AddTransient<IEmailSender, EmailSender>();
         builder.Services.AddScoped<IUserService,UserService>();
         builder.Services.AddScoped<IOrderService,OrderService>();
+        builder.Services.AddScoped<IPasswordResetCodeService,PasswordResetCodeService>();
         
         builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
         {

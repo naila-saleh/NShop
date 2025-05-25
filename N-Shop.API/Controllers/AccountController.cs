@@ -4,13 +4,18 @@ using System.Text;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using N_Shop.API.DTOs.Requests;
 using N_Shop.API.Models;
+using N_Shop.API.Services;
 using N_Shop.API.Utility;
+using ForgotPasswordRequest = N_Shop.API.DTOs.Requests.ForgotPasswordRequest;
+using LoginRequest = N_Shop.API.DTOs.Requests.LoginRequest;
+using RegisterRequest = N_Shop.API.DTOs.Requests.RegisterRequest;
 
 namespace N_Shop.API.Controllers;
 
@@ -22,14 +27,16 @@ public class AccountController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IEmailSender _emailSender;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IPasswordResetCodeService _passwordResetCodeService;
 
     public AccountController(UserManager<ApplicationUser> userManager,SignInManager<ApplicationUser> signInManager,
-        IEmailSender emailSender,RoleManager<IdentityRole> roleManager)
+        IEmailSender emailSender,RoleManager<IdentityRole> roleManager, IPasswordResetCodeService passwordResetCodeService)
     {
         this._userManager = userManager;
         this._signInManager = signInManager;
         this._emailSender = emailSender;
         this._roleManager = roleManager;
+        this._passwordResetCodeService = passwordResetCodeService;
     }
     
     [HttpPost("register")]
@@ -136,5 +143,45 @@ public class AccountController : ControllerBase
             else return BadRequest(result.Errors);
         }
         return BadRequest(new { message = "Invalid data" });
+    }
+
+    [HttpPost("ForgotPassword")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        var applicationUser = await _userManager.FindByEmailAsync(request.Email);
+        if(applicationUser == null) return BadRequest(new { message = "Email not found" });
+        var code = new Random().Next(1000,9999).ToString(); // generate a random 4 digits code
+        await _passwordResetCodeService.AddAsync(new()
+        {
+            ApplicationUserId = applicationUser.Id,
+            Code = code,
+            ExpireDate = DateTime.Now.AddMinutes(30) // 30 minutes from now
+        });
+        // send email
+        await _emailSender.SendEmailAsync(applicationUser.Email, "Password Reset Code",
+            $"<h1>Hello {applicationUser.UserName},</h1><p>Your password reset code is: <b>{code}</b></p>");
+        return Ok(new { message = "Reset Code sent successfully" });
+    }
+
+    [HttpPatch("SendCode")]
+    public async Task<IActionResult> SendCode([FromBody]SendCodeRequest request)
+    {
+        var applicationUser = await _userManager.FindByEmailAsync(request.Email);
+        if (applicationUser == null) return BadRequest(new { message = "Email not found" });
+        var resetCode =(await _passwordResetCodeService.GetAsync(e => e.ApplicationUserId == applicationUser.Id)).OrderByDescending(e => e.ExpireDate).FirstOrDefault();
+        if (resetCode is not null && resetCode.Code == request.Code && resetCode.ExpireDate > DateTime.Now)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
+            var result = await _userManager.ResetPasswordAsync(applicationUser,token,request.Password);
+            if (result.Succeeded)
+            {
+                await _emailSender.SendEmailAsync(applicationUser.Email, "Password Changed Successfully",
+                    $"<h1>Hello {applicationUser.UserName},</h1><p>Your password has been reset successfully</p>");
+                await _passwordResetCodeService.RemoveAsync(resetCode.Id);
+                return Ok(new { message = "Password changed successfully" });
+            }
+            else return BadRequest(result.Errors);
+        }
+        return BadRequest(new { message = "Invalid code" });
     }
 }

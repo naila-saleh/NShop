@@ -37,12 +37,12 @@ public class CheckOutsController : ControllerBase
             TotalPrice = carts.Sum(e=>e.Product.Price*e.Count),
             ApplicationUserId = appUser,
         };
-        if (request.PaymentMethod == "CashOnDelivery")
+        if (request.PaymentMethod == PaymentMethodType.CashOnDelivery.ToString())
         {
             order.PaymentMethodType = PaymentMethodType.CashOnDelivery;
-            _orderService.AddAsync(order);
+            await _orderService.AddAsync(order);
             return Ok(new { message = "Order placed successfully" });
-        }else if (request.PaymentMethod == "Visa")
+        }else if (request.PaymentMethod == PaymentMethodType.Visa.ToString())
         {
             order.PaymentMethodType = PaymentMethodType.Visa;
             var options = new SessionCreateOptions
