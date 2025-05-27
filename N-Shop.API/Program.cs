@@ -18,6 +18,7 @@ using Scalar.AspNetCore;
 using Stripe;
 using OrderService = N_Shop.API.Services.OrderService;
 using ProductService = N_Shop.API.Services.ProductService;
+using ReviewService = N_Shop.API.Services.ReviewService;
 
 namespace N_Shop.API;
 
@@ -53,7 +54,9 @@ public class Program
         builder.Services.AddTransient<IEmailSender, EmailSender>();
         builder.Services.AddScoped<IUserService,UserService>();
         builder.Services.AddScoped<IOrderService,OrderService>();
+        builder.Services.AddScoped<IOrderItemService,OrderItemService>();
         builder.Services.AddScoped<IPasswordResetCodeService,PasswordResetCodeService>();
+        builder.Services.AddScoped<IReviewService,ReviewService>();
         
         builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
         {

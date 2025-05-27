@@ -8,4 +8,5 @@ public interface ICartService:IService<Cart>
 {
     Task<Cart> AddToCart(int productId,string userId,CancellationToken cancellationToken = default);
     Task<IEnumerable<Cart>> GetCartItemsAsync(string userId);
+    Task<bool> RemoveRangeAsync(List<Cart> items,CancellationToken cancellationToken = default);
 }

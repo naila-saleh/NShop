@@ -35,4 +35,11 @@ public class CartService:Service<Cart>,ICartService
         return await GetAsync(e=>e.ApplicationUserId==userId,includes: [c=>c.Product]);
         //without includes the result is null + without e=>e.ApplicationUserId==userId any user have your token can access your cart
     }
+    
+    public async Task<bool> RemoveRangeAsync(List<Cart> items,CancellationToken cancellationToken = default)
+    {
+        _context.Carts.RemoveRange(items);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

@@ -21,7 +21,15 @@ public class ProductsController (IProductService productService): ControllerBase
     public IActionResult GetAll([FromQuery] string? query,[FromQuery] int page=1,[FromQuery] int limit=10)
     {
         var products = _productService.GetAsync(query,page,limit);
-        return Ok(products.Adapt<IEnumerable<ProductResponse>>());
+        if(products == null)return BadRequest();
+        var baseUrl = $"{Request.Scheme}://{Request.Host}/Images/";
+        var mappedProducts = products.ToList().Select(p =>
+        {
+            var product = p.Adapt<ProductResponse>();
+            product.Image = baseUrl+p.Image;
+            return product;
+        });
+        return Ok(mappedProducts);
     }
 
     [HttpGet("{id}")]
@@ -29,7 +37,11 @@ public class ProductsController (IProductService productService): ControllerBase
     public IActionResult GetById([FromRoute]int id)
     {
         var product = _productService.GetOneAsync(x=>x.Id == id);
-        return product == null? NotFound(): Ok(product.Adapt<ProductResponse>());
+        if(product == null)return NotFound();
+        var baseUrl = $"{Request.Scheme}://{Request.Host}/Images/";
+        var productResponse = product.Adapt<ProductResponse>();
+        productResponse.Image = baseUrl+product.Image;
+        return Ok(productResponse);
     }
 
     [HttpPost("")]

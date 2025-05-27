@@ -16,11 +16,11 @@ public class BrandService: Service<Brand>,IBrandService
 
     public async Task<bool> EditAsync(int id,Brand brand,CancellationToken cancellationToken = default)
     {
-        Brand? brandInDb = _context.Brands.Find(id);
+        Brand? brandInDb = await _context.Brands.FindAsync(id);
         if (brandInDb == null) return false;
         brand.Id=brandInDb.Id;
         _context.Brands.Update(brand);
-        _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 }
